@@ -15,6 +15,8 @@ const Calendar: React.FC = () => {
   });
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [editingTaskTitle, setEditingTaskTitle] = useState<string>('');
+  const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
     localStorage.setItem('calendarTasks', JSON.stringify(tasks));
@@ -64,6 +66,47 @@ const Calendar: React.FC = () => {
     }
   };
 
+  const handleDragStart = (taskId: number) => (e: React.DragEvent<HTMLDivElement>) => {
+    setDraggedTaskId(taskId);
+    e.dataTransfer.setData('taskId', taskId.toString());
+  };
+
+  const handleDragOverTask = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); // Allow dropping
+  };
+
+  const handleDropOnTask = (targetTaskId: number) => (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (draggedTaskId === null || draggedTaskId === targetTaskId) return;
+
+    const draggedTask = tasks.find(task => task.id === draggedTaskId);
+    const targetTask = tasks.find(task => task.id === targetTaskId);
+
+    if (draggedTask && targetTask && draggedTask.date === targetTask.date) {
+      const currentCellTasks = tasks.filter(task => task.date === draggedTask.date);
+      const reorderedTasks = [...currentCellTasks].sort((a, b) => {
+        if (a.id === draggedTaskId) return 1;
+        if (b.id === targetTaskId) return -1;
+        return 0;
+      });
+
+      setTasks([...tasks.filter(task => task.date !== draggedTask.date), ...reorderedTasks]);
+    }
+
+    setDraggedTaskId(null);
+  };
+
+  const handleDropOnCell = (dateString: string) => (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const taskId = parseInt(e.dataTransfer.getData('taskId'), 10);
+    setTasks(tasks.map(task => (task.id === taskId ? { ...task, date: dateString } : task)));
+    setDraggedTaskId(null);
+  };
+
+  const filteredTasks = tasks.filter(task =>
+    task.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const renderCalendarGrid = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -82,15 +125,21 @@ const Calendar: React.FC = () => {
           key={i}
           className={`calendar-cell ${isCurrentMonth ? 'current-month' : 'other-month'}`}
           onClick={() => isCurrentMonth && handleCellClick(dateString)}
+          onDragOver={handleDragOverTask}
+          onDrop={isCurrentMonth ? handleDropOnCell(dateString) : undefined}
         >
           <div className="cell-content">
             {isCurrentMonth && dayNumber}
-            {tasks
+            {filteredTasks
               .filter(task => task.date === dateString)
               .map(task => (
                 <div
                   key={task.id}
                   className="task"
+                  draggable
+                  onDragStart={handleDragStart(task.id)}
+                  onDragOver={handleDragOverTask}
+                  onDrop={handleDropOnTask(task.id)}
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent triggering the cell click handler
                     handleTaskClick(task);
@@ -134,6 +183,13 @@ const Calendar: React.FC = () => {
         <h2>{currentDate.toLocaleDateString('default', { month: 'long', year: 'numeric' })}</h2>
         <button onClick={handleNextMonth}>&gt;</button>
       </div>
+      <input
+        type="text"
+        placeholder="Search tasks..."
+        value={searchQuery}
+        onChange={e => setSearchQuery(e.target.value)}
+        className="task-search"
+      />
       <div className="calendar-grid">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
           <div key={day} className="calendar-day-header">

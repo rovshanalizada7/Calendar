@@ -99,3 +99,15 @@ body {
     cursor: not-allowed;
   }
   
+
+  .holiday-content {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #e63946;
+    margin-bottom: 5px;
+  }
+  
+  .task-list {
+    margin-top: 10px;
+  }
+  
