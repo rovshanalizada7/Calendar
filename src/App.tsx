@@ -3,6 +3,7 @@ import './Calendar.css';
 import { GrFormNextLink } from "react-icons/gr";
 import { GrFormPreviousLink } from "react-icons/gr";
 import { BsTrash3 } from "react-icons/bs";
+import { FaCheck } from "react-icons/fa";
 
 type Task = {
   id: number;
@@ -75,7 +76,7 @@ const Calendar: React.FC = () => {
   };
 
   const handleDragOverTask = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); // Allow dropping
+    e.preventDefault();
   };
 
   const handleDropOnTask = (targetTaskId: number) => (e: React.DragEvent<HTMLDivElement>) => {
@@ -144,28 +145,39 @@ const Calendar: React.FC = () => {
                   onDragOver={handleDragOverTask}
                   onDrop={handleDropOnTask(task.id)}
                   onClick={(e) => {
-                    e.stopPropagation(); 
+                    e.stopPropagation();
                     handleTaskClick(task);
                   }}
                 >
                   {editingTaskId === task.id ? (
-                    <input
-                      type="text"
-                      className='text-input'
-                      value={editingTaskTitle}
-                      onChange={e => setEditingTaskTitle(e.target.value)}
-                      onBlur={() => handleTaskEdit(task.id)}
-                    />
+                    <>
+                      <input
+                        type="text"
+                        className="text-input"
+                        value={editingTaskTitle}
+                        onChange={e => setEditingTaskTitle(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            handleTaskEdit(task.id);
+                          }
+                        }}
+                        onBlur={() => handleTaskEdit(task.id)}
+                      />
+                      <FaCheck
+                        className="save-task-icon"
+                        onClick={() => handleTaskEdit(task.id)}
+                      />
+                    </>
                   ) : (
                     <>
-                      {task.title}
+                      <div>{task.title}</div>
                       <BsTrash3
-                      className="delete-task"
-                         onClick={(e) => {
+                        className="delete-task"
+                        onClick={(e) => {
                           e.stopPropagation();
                           handleTaskDelete(task.id);
                         }}
-                        />
+                      />
                     </>
                   )}
                 </div>
@@ -181,9 +193,9 @@ const Calendar: React.FC = () => {
   return (
     <div className="calendar-container">
       <div className="calendar-header">
-        <GrFormPreviousLink onClick={handlePrevMonth} className='prev-btn'/>
+        <GrFormPreviousLink onClick={handlePrevMonth} className="prev-btn" />
         <h2>{currentDate.toLocaleDateString('default', { month: 'long', year: 'numeric' })}</h2>
-        <GrFormNextLink onClick={handleNextMonth} className='next-btn'/>
+        <GrFormNextLink onClick={handleNextMonth} className="next-btn" />
       </div>
       <input
         type="text"
@@ -205,3 +217,5 @@ const Calendar: React.FC = () => {
 };
 
 export default Calendar;
+
+

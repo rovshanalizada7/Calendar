@@ -12,7 +12,7 @@ body {
     background: white;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    width: 850px;
+    width: 1000px;
     padding: 20px;
     display: flex;
     flex-direction: column;
@@ -41,6 +41,7 @@ body {
   .calendar-day-header {
     font-weight: bold;
     text-align: center;
+    color: rgb(94, 92, 92);
   }
   
   .calendar-cell {
@@ -49,13 +50,10 @@ body {
     padding: 25px;
     text-align: center;
     position: relative;
+    box-shadow: 3px 3px 3px lightgray;
   }
   
-  /* .cell-content{
-    top: 10px;
-    position: absolute;
-    left: 10px;
-  } */
+
 
   .calendar-cell.current-month {
     background: #fff;
@@ -137,4 +135,11 @@ body {
     font-size: 1rem;
     cursor: pointer;
     color:black;
+  }
+
+  .save-task-icon{
+    color: green;
+    font-size: 15px;
+    padding: 3px;
+    cursor: pointer;
   }
