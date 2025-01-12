@@ -71,7 +71,7 @@ body {
   .calendar-cell .task {
     background: #ffcc00;
     border-radius: 3px;
-    padding: 2px;
+    padding: 4px;
     margin-top: 5px;
     font-size: 12px;
     text-align: center;
@@ -115,5 +115,26 @@ body {
   .task-list {
     margin-top: 10px;
   }
-  
-  
+  .task-search{
+    margin-bottom: 1rem;
+    padding: 7px;
+    outline: none;
+    border: none;
+    border-bottom: 1px solid lightgray;
+  }
+  .prev-btn,.next-btn{
+    font-size: 1.7rem;
+    cursor: pointer;
+  }
+  .text-input{
+    padding: 5px;
+    border: none;
+    outline: none;
+  }
+
+  .delete-task{
+    margin: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    color:black;
+  }

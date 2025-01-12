@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './Calendar.css';
+import { GrFormNextLink } from "react-icons/gr";
+import { GrFormPreviousLink } from "react-icons/gr";
+import { BsTrash3 } from "react-icons/bs";
 
 type Task = {
   id: number;
@@ -141,13 +144,14 @@ const Calendar: React.FC = () => {
                   onDragOver={handleDragOverTask}
                   onDrop={handleDropOnTask(task.id)}
                   onClick={(e) => {
-                    e.stopPropagation(); // Prevent triggering the cell click handler
+                    e.stopPropagation(); 
                     handleTaskClick(task);
                   }}
                 >
                   {editingTaskId === task.id ? (
                     <input
                       type="text"
+                      className='text-input'
                       value={editingTaskTitle}
                       onChange={e => setEditingTaskTitle(e.target.value)}
                       onBlur={() => handleTaskEdit(task.id)}
@@ -155,15 +159,13 @@ const Calendar: React.FC = () => {
                   ) : (
                     <>
                       {task.title}
-                      <button
-                        className="delete-task"
-                        onClick={(e) => {
+                      <BsTrash3
+                      className="delete-task"
+                         onClick={(e) => {
                           e.stopPropagation();
                           handleTaskDelete(task.id);
                         }}
-                      >
-                        ✖
-                      </button>
+                        />
                     </>
                   )}
                 </div>
@@ -179,9 +181,9 @@ const Calendar: React.FC = () => {
   return (
     <div className="calendar-container">
       <div className="calendar-header">
-        <button onClick={handlePrevMonth}>&lt;</button>
+        <GrFormPreviousLink onClick={handlePrevMonth} className='prev-btn'/>
         <h2>{currentDate.toLocaleDateString('default', { month: 'long', year: 'numeric' })}</h2>
-        <button onClick={handleNextMonth}>&gt;</button>
+        <GrFormNextLink onClick={handleNextMonth} className='next-btn'/>
       </div>
       <input
         type="text"
