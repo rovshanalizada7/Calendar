@@ -4,7 +4,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    height:740px;
     background-color: #f4f4f9;
   }
   
@@ -47,7 +47,7 @@ body {
   .calendar-cell {
     background: #e6e6e6;
     border-radius: 4px;
-    padding: 25px;
+    padding: 18px;
     text-align: center;
     position: relative;
     box-shadow: 3px 3px 3px lightgray;
@@ -143,3 +143,17 @@ body {
     padding: 3px;
     cursor: pointer;
   }
+
+
+  .holiday-name {
+    font-size: 0.8rem;
+    color: red;
+    font-weight: bold;
+    margin-top: 5px;
+    text-align: center;
+  }
+
+
+  
+
+  

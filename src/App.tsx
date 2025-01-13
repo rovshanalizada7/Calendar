@@ -11,12 +11,20 @@ type Task = {
   title: string;
 };
 
+type Holiday = {
+  date: string;
+  localName: string;
+  name: string;
+  countryCode: string;
+};
+
 const Calendar: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [tasks, setTasks] = useState<Task[]>(() => {
     const savedTasks = localStorage.getItem('calendarTasks');
     return savedTasks ? JSON.parse(savedTasks) : [];
   });
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [editingTaskTitle, setEditingTaskTitle] = useState<string>('');
   const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
@@ -25,6 +33,26 @@ const Calendar: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('calendarTasks', JSON.stringify(tasks));
   }, [tasks]);
+
+  useEffect(() => {
+    const fetchHolidays = async () => {
+      const year = currentDate.getFullYear();
+      const countryCode = "UA"; // Replace with the desired country code
+      try {
+        const response = await fetch(
+          `https://date.nager.at/api/v3/PublicHolidays/${year}/${countryCode}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch holidays.");
+        }
+        const data = await response.json();
+        setHolidays(data);
+      } catch (error) {
+        console.error("Error fetching holidays:", error);
+      }
+    };
+    fetchHolidays();
+  }, [currentDate]);
 
   const daysInMonth = (year: number, month: number) => {
     return new Date(year, month + 1, 0).getDate();
@@ -42,62 +70,58 @@ const Calendar: React.FC = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
   };
 
-  const handleTaskClick = (task: Task) => {
-    setEditingTaskId(task.id);
-    setEditingTaskTitle(task.title);
-  };
+  // const handleTaskClick = (task: Task) => {
+  //   setEditingTaskId(task.id);
+  //   setEditingTaskTitle(task.title);
+  // };
 
   const handleTaskEdit = (taskId: number) => {
+    if (editingTaskTitle.trim() === '') {
+      alert('Task title cannot be empty!');
+      // Reset editing state
+      setEditingTaskId(null);
+      setEditingTaskTitle('');
+      return;
+    }
+  
     setTasks(tasks.map(task => (task.id === taskId ? { ...task, title: editingTaskTitle } : task)));
     setEditingTaskId(null);
     setEditingTaskTitle('');
   };
+  
+  
 
   const handleTaskDelete = (taskId: number) => {
     setTasks(tasks.filter(task => task.id !== taskId));
   };
 
   const handleCellClick = (dateString: string) => {
-    if (!tasks.some(task => task.date === dateString)) {
+    const existingTask = tasks.find(task => task.date === dateString);
+  
+    if (!existingTask) {
       const newTask: Task = {
         id: Date.now(),
         date: dateString,
         title: "New Task",
       };
+  
       setTasks([...tasks, newTask]);
       setEditingTaskId(newTask.id);
       setEditingTaskTitle(newTask.title);
+    } else {
+      setEditingTaskId(existingTask.id);
+      setEditingTaskTitle(existingTask.title);
     }
   };
+  
 
   const handleDragStart = (taskId: number) => (e: React.DragEvent<HTMLDivElement>) => {
     setDraggedTaskId(taskId);
     e.dataTransfer.setData('taskId', taskId.toString());
   };
 
-  const handleDragOverTask = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
-
-  const handleDropOnTask = (targetTaskId: number) => (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    if (draggedTaskId === null || draggedTaskId === targetTaskId) return;
-
-    const draggedTask = tasks.find(task => task.id === draggedTaskId);
-    const targetTask = tasks.find(task => task.id === targetTaskId);
-
-    if (draggedTask && targetTask && draggedTask.date === targetTask.date) {
-      const currentCellTasks = tasks.filter(task => task.date === draggedTask.date);
-      const reorderedTasks = [...currentCellTasks].sort((a, b) => {
-        if (a.id === draggedTaskId) return 1;
-        if (b.id === targetTaskId) return -1;
-        return 0;
-      });
-
-      setTasks([...tasks.filter(task => task.date !== draggedTask.date), ...reorderedTasks]);
-    }
-
-    setDraggedTaskId(null);
+  const handleDragOverCell = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); // Allow drop
   };
 
   const handleDropOnCell = (dateString: string) => (e: React.DragEvent<HTMLDivElement>) => {
@@ -124,16 +148,19 @@ const Calendar: React.FC = () => {
         ? `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`
         : '';
 
+      const holiday = holidays.find(h => h.date === dateString);
+
       return (
         <div
           key={i}
           className={`calendar-cell ${isCurrentMonth ? 'current-month' : 'other-month'}`}
           onClick={() => isCurrentMonth && handleCellClick(dateString)}
-          onDragOver={handleDragOverTask}
+          onDragOver={handleDragOverCell}
           onDrop={isCurrentMonth ? handleDropOnCell(dateString) : undefined}
         >
           <div className="cell-content">
             {isCurrentMonth && dayNumber}
+            {holiday && <div className="holiday-name">{holiday.localName}</div>}
             {filteredTasks
               .filter(task => task.date === dateString)
               .map(task => (
@@ -142,42 +169,32 @@ const Calendar: React.FC = () => {
                   className="task"
                   draggable
                   onDragStart={handleDragStart(task.id)}
-                  onDragOver={handleDragOverTask}
-                  onDrop={handleDropOnTask(task.id)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleTaskClick(task);
-                  }}
                 >
                   {editingTaskId === task.id ? (
                     <>
-                      <input
-                        type="text"
-                        className="text-input"
-                        value={editingTaskTitle}
-                        onChange={e => setEditingTaskTitle(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') {
-                            handleTaskEdit(task.id);
-                          }
-                        }}
-                        onBlur={() => handleTaskEdit(task.id)}
-                      />
-                      <FaCheck
-                        className="save-task-icon"
-                        onClick={() => handleTaskEdit(task.id)}
-                      />
+                     <input
+                      type="text"
+                      className="text-input"
+                      value={editingTaskTitle}
+                      onChange={(e) => setEditingTaskTitle(e.target.value)}
+                      onBlur={() => handleTaskEdit(task.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleTaskEdit(task.id);
+                        }
+                      }}
+                    />
+
+                      <FaCheck 
+                       className="save-task-icon"
+                      onClick={() => handleTaskEdit(task.id)} />
                     </>
                   ) : (
                     <>
                       <div>{task.title}</div>
                       <BsTrash3
-                        className="delete-task"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleTaskDelete(task.id);
-                        }}
-                      />
+                      className="delete-task"
+                      onClick={() => handleTaskDelete(task.id)} />
                     </>
                   )}
                 </div>
@@ -217,5 +234,6 @@ const Calendar: React.FC = () => {
 };
 
 export default Calendar;
+
 
 
