@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './Calendar.css';
+import './calendar.css';
 import { GrFormNextLink, GrFormPreviousLink } from "react-icons/gr";
 import { BsTrash3 } from "react-icons/bs";
 import { FaCheck } from "react-icons/fa";
