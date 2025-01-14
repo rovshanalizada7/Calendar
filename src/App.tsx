@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Calendar.css';
-import { GrFormNextLink } from "react-icons/gr";
-import { GrFormPreviousLink } from "react-icons/gr";
+import { GrFormNextLink, GrFormPreviousLink } from "react-icons/gr";
 import { BsTrash3 } from "react-icons/bs";
 import { FaCheck } from "react-icons/fa";
 
@@ -19,7 +18,11 @@ type Holiday = {
 };
 
 const Calendar: React.FC = () => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth();
+
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [tasks, setTasks] = useState<Task[]>(() => {
     const savedTasks = localStorage.getItem('calendarTasks');
     return savedTasks ? JSON.parse(savedTasks) : [];
@@ -36,11 +39,10 @@ const Calendar: React.FC = () => {
 
   useEffect(() => {
     const fetchHolidays = async () => {
-      const year = currentDate.getFullYear();
-      const countryCode = "UA"; // Replace with the desired country code
+      const countryCode = "UA"; //We can replace here with the desired country code so i have choosen Ukraine holidays
       try {
         const response = await fetch(
-          `https://date.nager.at/api/v3/PublicHolidays/${year}/${countryCode}`
+          `https://date.nager.at/api/v3/PublicHolidays/${selectedYear}/${countryCode}`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch holidays.");
@@ -52,7 +54,7 @@ const Calendar: React.FC = () => {
       }
     };
     fetchHolidays();
-  }, [currentDate]);
+  }, [selectedYear]);
 
   const daysInMonth = (year: number, month: number) => {
     return new Date(year, month + 1, 0).getDate();
@@ -63,48 +65,41 @@ const Calendar: React.FC = () => {
   };
 
   const handlePrevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
+    if (selectedMonth === 0) {
+      setSelectedYear(selectedYear - 1);
+      setSelectedMonth(11);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
   };
 
   const handleNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
-  };
-
-  // const handleTaskClick = (task: Task) => {
-  //   setEditingTaskId(task.id);
-  //   setEditingTaskTitle(task.title);
-  // };
-
-  const handleTaskEdit = (taskId: number) => {
-    if (editingTaskTitle.trim() === '') {
-      alert('Task title cannot be empty!');
-      // Reset editing state
-      setEditingTaskId(null);
-      setEditingTaskTitle('');
-      return;
+    if (selectedMonth === 11) {
+      setSelectedYear(selectedYear + 1);
+      setSelectedMonth(0);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
     }
-  
-    setTasks(tasks.map(task => (task.id === taskId ? { ...task, title: editingTaskTitle } : task)));
-    setEditingTaskId(null);
-    setEditingTaskTitle('');
   };
-  
-  
 
-  const handleTaskDelete = (taskId: number) => {
-    setTasks(tasks.filter(task => task.id !== taskId));
+  const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedYear(Number(e.target.value));
+  };
+
+  const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedMonth(Number(e.target.value));
   };
 
   const handleCellClick = (dateString: string) => {
     const existingTask = tasks.find(task => task.date === dateString);
-  
+
     if (!existingTask) {
       const newTask: Task = {
         id: Date.now(),
         date: dateString,
         title: "New Task",
       };
-  
+
       setTasks([...tasks, newTask]);
       setEditingTaskId(newTask.id);
       setEditingTaskTitle(newTask.title);
@@ -113,7 +108,23 @@ const Calendar: React.FC = () => {
       setEditingTaskTitle(existingTask.title);
     }
   };
-  
+
+  const handleTaskEdit = (taskId: number) => {
+    if (editingTaskTitle.trim() === '') {
+      alert('Task title cannot be empty!');
+      setEditingTaskId(null);
+      setEditingTaskTitle('');
+      return;
+    }
+
+    setTasks(tasks.map(task => (task.id === taskId ? { ...task, title: editingTaskTitle } : task)));
+    setEditingTaskId(null);
+    setEditingTaskTitle('');
+  };
+
+  const handleTaskDelete = (taskId: number) => {
+    setTasks(tasks.filter(task => task.id !== taskId));
+  };
 
   const handleDragStart = (taskId: number) => (e: React.DragEvent<HTMLDivElement>) => {
     setDraggedTaskId(taskId);
@@ -121,7 +132,7 @@ const Calendar: React.FC = () => {
   };
 
   const handleDragOverCell = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); // Allow drop
+    e.preventDefault();
   };
 
   const handleDropOnCell = (dateString: string) => (e: React.DragEvent<HTMLDivElement>) => {
@@ -136,16 +147,14 @@ const Calendar: React.FC = () => {
   );
 
   const renderCalendarGrid = () => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const daysInCurrentMonth = daysInMonth(year, month);
-    const startDay = startDayOfMonth(year, month);
+    const daysInCurrentMonth = daysInMonth(selectedYear, selectedMonth);
+    const startDay = startDayOfMonth(selectedYear, selectedMonth);
 
     const calendarDays = Array.from({ length: 42 }, (_, i) => {
       const dayNumber = i - startDay + 1;
       const isCurrentMonth = dayNumber > 0 && dayNumber <= daysInCurrentMonth;
       const dateString = isCurrentMonth
-        ? `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`
+        ? `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`
         : '';
 
       const holiday = holidays.find(h => h.date === dateString);
@@ -172,29 +181,30 @@ const Calendar: React.FC = () => {
                 >
                   {editingTaskId === task.id ? (
                     <>
-                     <input
-                      type="text"
-                      className="text-input"
-                      value={editingTaskTitle}
-                      onChange={(e) => setEditingTaskTitle(e.target.value)}
-                      onBlur={() => handleTaskEdit(task.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleTaskEdit(task.id);
-                        }
-                      }}
-                    />
-
-                      <FaCheck 
-                       className="save-task-icon"
-                      onClick={() => handleTaskEdit(task.id)} />
+                      <input
+                        type="text"
+                        className="text-input"
+                        value={editingTaskTitle}
+                        onChange={(e) => setEditingTaskTitle(e.target.value)}
+                        onBlur={() => handleTaskEdit(task.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleTaskEdit(task.id);
+                          }
+                        }}
+                      />
+                      <FaCheck
+                        className="save-task-icon"
+                        onClick={() => handleTaskEdit(task.id)}
+                      />
                     </>
                   ) : (
                     <>
                       <div>{task.title}</div>
                       <BsTrash3
-                      className="delete-task"
-                      onClick={() => handleTaskDelete(task.id)} />
+                        className="delete-task"
+                        onClick={() => handleTaskDelete(task.id)}
+                      />
                     </>
                   )}
                 </div>
@@ -211,9 +221,32 @@ const Calendar: React.FC = () => {
     <div className="calendar-container">
       <div className="calendar-header">
         <GrFormPreviousLink onClick={handlePrevMonth} className="prev-btn" />
-        <h2>{currentDate.toLocaleDateString('default', { month: 'long', year: 'numeric' })}</h2>
+        <h2>
+          {selectedYear} - {new Date(selectedYear, selectedMonth).toLocaleDateString('default', {
+            month: 'long',
+          })}
+        </h2>
         <GrFormNextLink onClick={handleNextMonth} className="next-btn" />
+
+        <div className="calendar-options">
+          <select value={selectedYear} onChange={handleYearChange} className='select-date'>
+            {Array.from({ length: 20 }, (_, i) => currentYear - 10 + i).map(year => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+
+          <select value={selectedMonth} onChange={handleMonthChange} className='select-date'>
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i} value={i}>
+                {new Date(0, i).toLocaleDateString('default', { month: 'long' })}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
+
       <input
         type="text"
         placeholder="Search tasks..."
@@ -221,6 +254,7 @@ const Calendar: React.FC = () => {
         onChange={e => setSearchQuery(e.target.value)}
         className="task-search"
       />
+
       <div className="calendar-grid">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
           <div key={day} className="calendar-day-header">
@@ -234,6 +268,5 @@ const Calendar: React.FC = () => {
 };
 
 export default Calendar;
-
 
 

@@ -17,6 +17,9 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    background-image: url("https://img.freepik.com/premium-photo/white-paper-desk-calendar-isolated-white-background_293060-3572.jpg?semt=ais_hybrid");
+    background-position: center;
+    background-size: cover;
   }
   
   .calendar-header {
@@ -152,8 +155,36 @@ body {
     margin-top: 5px;
     text-align: center;
   }
+  .calendar-options{
+    display: flex;
+    gap: 15px;
+  }
+  .select-date{
+    border: none;
+    font-size:1rem;
+    font-weight: bold;
+    outline: none;
+    color: black;
+    cursor: pointer;
+  }
 
+  @media (max-width: 1100px) {
+    .calendar-container{
+      width: 850px;
+    }
+  }
 
+  @media (max-width: 950px) {
+    .calendar-container{
+      width: 650px;
+    }
+  }
+
+  @media (max-width: 750px) {
+    .calendar-container{
+      width: 520px;
+    }
+  }
   
 
   
