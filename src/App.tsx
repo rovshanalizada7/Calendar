@@ -30,7 +30,6 @@ const Calendar: React.FC = () => {
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [editingTaskTitle, setEditingTaskTitle] = useState<string>('');
-  const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
@@ -127,7 +126,6 @@ const Calendar: React.FC = () => {
   };
 
   const handleDragStart = (taskId: number) => (e: React.DragEvent<HTMLDivElement>) => {
-    setDraggedTaskId(taskId);
     e.dataTransfer.setData('taskId', taskId.toString());
   };
 
@@ -139,7 +137,6 @@ const Calendar: React.FC = () => {
     e.preventDefault();
     const taskId = parseInt(e.dataTransfer.getData('taskId'), 10);
     setTasks(tasks.map(task => (task.id === taskId ? { ...task, date: dateString } : task)));
-    setDraggedTaskId(null);
   };
 
   const filteredTasks = tasks.filter(task =>
